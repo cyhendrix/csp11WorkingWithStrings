@@ -46,7 +46,7 @@ function showResults(){const g=grade(),sent=localStorage.getItem(SENT)==='1';doc
 studentForm.addEventListener('submit',e=>{e.preventDefault();student={first:document.getElementById('studentFirst').value.trim(),last:document.getElementById('studentLast').value.trim(),period:document.getElementById('studentPeriod').value};if(!student.first||!student.last||!student.period)return;localStorage.setItem(STUDENT,JSON.stringify(student));sessionStorage.setItem('csp11-started','1');state.current=0;save();begin()});
 function begin(){document.getElementById('studentScreen').hidden=true;document.getElementById('labContent').hidden=false;document.getElementById('labProgress').hidden=false;render()}
 // Always show student information before opening the lessons.
-const GRADE_ENDPOINT='https://script.google.com/a/macros/benhillschools.org/s/AKfycbwSO9TgVsYDqOpukIuVBjwaEAIoY9Vribb7AHyjCkFkZhfSBabhcjQ9B7zlH8lGxi4d/exec';
+const GRADE_ENDPOINT='https://script.google.com/a/macros/benhillschools.org/s/AKfycbz9IipEcz2wq8Hbye5zC3pyuXFCW9_4PlutdfW3oRwfKcTW5jMgV3FqxNYVWupvJ8kO/exec';
 document.getElementById('submitResultsBtn').onclick=async()=>{
  if(!student||!allReady())return;
  const button=document.getElementById('submitResultsBtn');
