@@ -42,16 +42,27 @@ function render(){
 }
 function renderNavigation(){const i=state.current,b=document.getElementById('nextLessonBtn'),note=document.getElementById('lessonCompletionNote');if(!b||!note)return;const remaining=lessons[i].qs.filter((_,j)=>!(state.answers[i+'-'+j]===true||(state.attempts[i+'-'+j]||0)>=2)).length;b.disabled=!ready(i);note.textContent=ready(i)?'✓ All lesson checks complete. You may continue.':(remaining?remaining+' multiple-choice question(s) still need completion. ':'')+(!state.passed[i]?'Complete the coding check to continue.':'');}
 function go(i){if(i===3&&!allReady()&&localStorage.getItem(SENT)!=='1')return;state.current=i;save();render();window.scrollTo(0,0)}
-function showResults(){const g=grade(),sent=localStorage.getItem(SENT)==='1';document.getElementById('completedCount').textContent=g.total+' / '+g.total;document.getElementById('finalScore').textContent=g.percent+'%';document.getElementById('submissionStatus').textContent='All checks completed. Click Submit Results to open your prefilled grading form, then click Submit in Google Forms.';document.getElementById('submitResultsBtn').hidden=false;document.getElementById('submitResultsBtn').disabled=false;document.getElementById('submitResultsBtn').textContent='Submit Results'}
+function showResults(){const g=grade(),sent=localStorage.getItem(SENT)==='1';document.getElementById('completedCount').textContent=g.total+' / '+g.total;document.getElementById('finalScore').textContent=g.percent+'%';document.getElementById('submissionStatus').textContent='All checks completed. Click Submit Results to send your grade to the spreadsheet.';document.getElementById('submitResultsBtn').hidden=false;document.getElementById('submitResultsBtn').disabled=false;document.getElementById('submitResultsBtn').textContent='Submit Results'}
 studentForm.addEventListener('submit',e=>{e.preventDefault();student={first:document.getElementById('studentFirst').value.trim(),last:document.getElementById('studentLast').value.trim(),period:document.getElementById('studentPeriod').value};if(!student.first||!student.last||!student.period)return;localStorage.setItem(STUDENT,JSON.stringify(student));sessionStorage.setItem('csp11-started','1');state.current=0;save();begin()});
 function begin(){document.getElementById('studentScreen').hidden=true;document.getElementById('labContent').hidden=false;document.getElementById('labProgress').hidden=false;render()}
 // Always show student information before opening the lessons.
-document.getElementById('submitResultsBtn').onclick=()=>{
+const GRADE_ENDPOINT='https://script.google.com/a/macros/benhillschools.org/s/AKfycbwSO9TgVsYDqOpukIuVBjwaEAIoY9Vribb7AHyjCkFkZhfSBabhcjQ9B7zlH8lGxi4d/exec';
+document.getElementById('submitResultsBtn').onclick=async()=>{
  if(!student||!allReady())return;
- const fields={'entry.2089413779':student.last+', '+student.first,'entry.890934651':student.period,'entry.646173439':'Chapter 11 | Working with Strings','entry.962158861':String(grade().percent)};
- const url='https://docs.google.com/forms/d/e/1FAIpQLSf9qAF0Ek04CLXOzReYWO-5YVDfY70LYoWWMLaLyC0bG70YUg/viewform?usp=pp_url&'+new URLSearchParams(fields).toString();
+ const button=document.getElementById('submitResultsBtn');
  const status=document.getElementById('submissionStatus');
- status.innerHTML='Your grading form is ready. <a id="gradeFormLink" target="_blank" rel="noopener" href="'+url+'">Open prefilled form</a>, then click Submit in Google Forms to record your grade.';
- window.open(url,'_blank');
+ const payload={name:student.last+', '+student.first,period:student.period,chapter:'Chapter 11 | Working with Strings',score:grade().percent};
+ button.disabled=true;button.textContent='Sending…';
+ status.textContent='Sending your score to the grade spreadsheet…';
+ try{
+  await fetch(GRADE_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  // Apps Script's cross-origin response is opaque: a completed request does not confirm a saved row.
+  status.textContent='Score sent. Please check the Grade Checker to confirm it was recorded.';
+  button.textContent='Send Results Again';
+ }catch(error){
+  status.textContent='Could not send your score. Check your connection and try again.';
+  button.textContent='Retry Submission';
+ }
+ button.disabled=false;
 };
 document.getElementById('resetBtn').onclick=()=>{if(!confirm('Clear all saved Chapter 11 answers and student information?'))return;localStorage.removeItem(KEY);localStorage.removeItem(STUDENT);localStorage.removeItem(SENT);sessionStorage.removeItem('csp11-started');location.reload()};
